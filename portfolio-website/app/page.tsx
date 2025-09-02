@@ -1,134 +1,57 @@
 "use client";
-import { useEffect, useRef } from "react";
-
-type Mode = "follow" | "idle";
+import useHeroAnimation from "@/components/useHeroAnimation";
+import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react';
+import ImageCascade from "@/components/ImageCascade";
 
 export default function Home() {
-  const heroRef = useRef<HTMLElement | null>(null);
-  const targetPos = useRef({ x: 50, y: 50 });
-  const currentPos = useRef({ x: 50, y: 50 });
-  const animating = useRef(false);
+  const { heroRef } = useHeroAnimation();
   
-  // Mode and idle animation state
-  const modeRef = useRef<Mode>("idle");
-  const idleTimeout = useRef<NodeJS.Timeout | null>(null);
-  const angleRef = useRef(0);
-  const lastTsRef = useRef<number | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
-  useEffect(() => {
-    let lastFrameTime = 0;
-    
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const targetFPS = isSafari ? 30 : 50;
-    const frameInterval = 1000 / targetFPS;
+    useEffect(() => {
+    // Using placeholder images from Unsplash for demonstration
+    setImageUrls([
+      '/image1.jpg',
+      '/image2.jpg',
+      '/image3.jpg',
+      '/image4.jpg',
+    ]);
 
-    // Idle animation settings
-    const idleRadiusPct = 25; // How far from center to orbit
-    const idleSpeed = 0.025; // Revolutions per second (slow)
-
-    const moveGradient = (event: MouseEvent) => {
-      const winWidth = window.innerWidth;
-      const winHeight = window.innerHeight;
-      const mouseX = (event.pageX / winWidth) * 100;
-      const mouseY = (event.pageY / winHeight) * 100;
-      
-      // Switch to follow mode
-      modeRef.current = "follow";
-      targetPos.current = { x: mouseX, y: mouseY };
-      
-      // Reset idle timeout
-      if (idleTimeout.current) clearTimeout(idleTimeout.current);
-      idleTimeout.current = setTimeout(() => {
-        modeRef.current = "idle";
-        lastTsRef.current = null; // Reset timestamp for smooth idle start
-      }, 2000); // 2 seconds of no movement = switch to idle
-      
-      if (!animating.current) {
-        animating.current = true;
-        requestAnimationFrame(animate);
-      }
-    };
-
-    const animate = (currentTime: number) => {
-      if (currentTime - lastFrameTime < frameInterval) {
-        if (animating.current) {
-          requestAnimationFrame(animate);
-        }
-        return;
-      }
-      lastFrameTime = currentTime;
-
-      if (!heroRef.current) {
-        animating.current = false;
-        return;
-      }
-
-      // Handle idle animation
-      if (modeRef.current === "idle") {
-        let dt = 0;
-        if (lastTsRef.current != null) {
-          dt = (currentTime - lastTsRef.current) / 1000; // Convert to seconds
-        }
-        lastTsRef.current = currentTime;
-
-        // Advance angle for orbital motion
-        angleRef.current += 2 * Math.PI * idleSpeed * dt;
-
-        // Calculate orbital position around center (50%, 50%)
-        const x = 50 + idleRadiusPct * Math.cos(angleRef.current);
-        const y = 50 + idleRadiusPct * Math.sin(angleRef.current);
-        targetPos.current = { x, y };
-      }
-
-      // Lerp toward target (whether follow or idle)
-      const lerpFactor = isSafari ? 0.06 : 0.08;
-      currentPos.current.x += (targetPos.current.x - currentPos.current.x) * lerpFactor;
-      currentPos.current.y += (targetPos.current.y - currentPos.current.y) * lerpFactor;
-
-      // Round values for Safari
-      const roundedX = isSafari ? Math.round(currentPos.current.x * 10) / 10 : currentPos.current.x;
-      const roundedY = isSafari ? Math.round(currentPos.current.y * 10) / 10 : currentPos.current.y;
-
-      heroRef.current.style.setProperty("--noise-x", `${roundedX}%`);
-      heroRef.current.style.setProperty("--noise-y", `${roundedY}%`);
-
-      // Keep animating if we're in idle mode OR not close to target
-      const dx = Math.abs(targetPos.current.x - currentPos.current.x);
-      const dy = Math.abs(targetPos.current.y - currentPos.current.y);
-      
-      if (modeRef.current === "idle" || dx > 0.1 || dy > 0.1) {
-        requestAnimationFrame(animate);
-      } else {
-        animating.current = false;
-      }
-    };
-
-    // Start in idle mode immediately
-    modeRef.current = "idle";
-    animating.current = true;
-    requestAnimationFrame(animate);
-
-    document.addEventListener("mousemove", moveGradient, { passive: true });
-
-    return () => {
-      document.removeEventListener("mousemove", moveGradient);
-      if (idleTimeout.current) clearTimeout(idleTimeout.current);
-    };
   }, []);
-
   return (
     <>
-      <section
-        ref={heroRef}
-        className="w-full min-h-[80vh] flex items-center justify-center bg-noise wave-border"
-      >
-        {/* Hero content */}
-      </section>
-      <div className="container mx-auto py-16">
-        <p className="text-center text-lg">Scroll down for more content...</p>
-        <div className="h-[120vh] bg-gray-100 dark:bg-gray-900 rounded-lg mt-8 flex items-center justify-center">
-        </div>
+      <section ref={heroRef} className="hero-section w-full min-h-[80vh] flex items-center justify-center wave-border">
+      <div className="flex flex-col items-center justify-center gap-6">
+        <h1 className="text-5xl font-bold text-center mb-4">Welcome to My Portfolio</h1>
+        <p className="text-lg text-center max-w-xl mb-6">
+          Explore my work, skills, and experience. Scroll down to see more!
+        </p>
+        <Button size="lg">Get Started</Button>
       </div>
+      </section>
+      
+      <section className="py-16 relative min-h-screen">
+        <div className="mx-auto max-w-[2000px] px-0 sm:px-6 md:px-12 lg:px-16">
+          <div className="w-full rounded-3xl bg-[#f6f8e9] overflow-hidden">
+            <div className="relative h-[500px] lg:h-[600px] p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+              <div className="lg:max-w-xl flex-shrink-0">
+                <h2 className="text-4xl sm:text-3xl font-bold mb-4">
+                  Title with long name
+                </h2>
+                <p className="text-lg sm:text-base text-gray-700">
+                  subtitle
+                </p>
+              </div>
+              <div className="w-full">
+                <div className="relative">
+                  <ImageCascade images={imageUrls} interval={3000} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
